@@ -1,0 +1,85 @@
+<!doctype html>
+<title>WebSocket Client</title>
+<meta charset="utf-8">
+    <body>
+
+        <div>
+            <span>Server Address : </span>
+            <input id=serverAddress type=text value=ws://127.0.0.1:54321>
+            <button id=connect onclick=connect()>Connect</button>
+            <button id=disconnect onclick=disconnect() disabled>Disconnect</button>
+        </div>
+
+        <div id=messageInputContainer style="visibility: collapse">
+            <span>Enter Message : </span>
+            <input id=message type=text>
+            <button onclick=send()>Send</button>
+        </div>
+
+        <div id=messages>
+
+        </div>
+    </body>
+
+<script>
+    var webSocket;
+
+    var connect = function(){
+        var serverAddressInput = document.getElementById("serverAddress");
+        var address = serverAddressInput.value;
+        webSocket = new WebSocket(address);
+
+        webSocket.onopen = function(e) {
+            changeState(true);
+            log("Connection open...");
+        };
+
+        webSocket.onerror = function (e) {
+            changeState(false);
+            log("Connection error...");
+        };
+
+        webSocket.onmessage = function(e){
+            if(typeof e.data === "string")
+                log("Received : " + e.data);
+            else
+                log("Binary message received...");
+        };
+        webSocket.onclose = function(e){
+            log("Connection Closed...");
+            changeState(false);
+        };
+    };
+    var disconnect = function(){
+        log("Closing connection...");
+        webSocket.close();
+    };
+    var log = function(message){
+		var text = document.createTextNode(message);
+        var div = document.createElement('div');
+		div.appendChild(text);
+        div.innerText = message;
+
+        document.getElementById("messages").appendChild(div);
+    };
+    var changeState = function(isConnected){
+        var container = document.getElementById("messageInputContainer");
+        container.style.visibility=isConnected?"visible":"collapse";
+
+        var connectButton = document.getElementById("connect");
+        connectButton.disabled = isConnected;
+
+        var disconnectButton = document.getElementById("disconnect");
+        disconnectButton.disabled = !isConnected;
+    };
+    var send = function() {
+        if (webSocket.readyState != 1) {
+            log("Cannot send data when the connection is closed...");
+            return;
+        }
+        var messageInput = document.getElementById("message");
+        var message = messageInput.value;
+        log("Sending : " + message);
+        webSocket.send(message);
+    };
+</script>
